@@ -1,1 +1,92 @@
+# Make Copilot Smarter for GitHub CLI Development
 
+This file contains context and instructions to help GitHub Copilot provide better assistance when working on the GitHub CLI project.
+
+## Project Overview
+The GitHub CLI (`gh`) is the official command-line tool for GitHub, bringing pull requests, issues, and other GitHub concepts to the terminal.
+
+## Key Technologies
+- **Language**: Go 1.24+
+- **Build Tool**: Make (Unix-like) or go build (Windows)
+- **Testing**: Go's built-in testing framework
+- **APIs**: GitHub REST and GraphQL APIs
+
+## Code Patterns
+
+### Command Structure
+Commands follow a hierarchical pattern:
+```go
+// Example: pkg/cmd/issue/create/create.go
+func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Command {
+    opts := &CreateOptions{
+        IO: f.IOStreams,
+        HttpClient: f.HttpClient,
+    }
+    // ... command setup
+}
+```
+
+### Testing Pattern
+Tests use table-driven design:
+```go
+func TestCommandName(t *testing.T) {
+    tests := []struct {
+        name string
+        opts Options
+        want string
+    }{
+        {name: "test case", opts: Options{}, want: "expected"},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // test logic
+        })
+    }
+}
+```
+
+### Special Assignees
+The CLI supports special assignee values:
+- `@me` - assigns the current user
+- `@copilot` - assigns GitHub Copilot (login: copilot-swe-agent)
+
+## Important Files
+- `cmd/gh/main.go` - Main entry point
+- `pkg/cmd/*/` - Command implementations
+- `api/` - GitHub API client
+- `pkg/cmd/pr/shared/` - Shared PR/issue utilities
+- `internal/` - Internal packages
+
+## Build & Test Commands
+```bash
+# Build
+make                          # Unix-like systems
+go run script/build.go        # Windows
+
+# Test
+go test ./...                 # All tests
+make test                     # Same as above
+make acceptance               # Acceptance tests
+
+# Run
+./bin/gh                      # Unix-like systems
+.\bin\gh.exe                  # Windows
+```
+
+## Common Utilities
+- `cmdutil.Factory` - Provides common dependencies (HTTP client, IO streams, etc.)
+- `iostreams.IOStreams` - Handles input/output
+- `api.NewClient*` - Creates GitHub API clients
+- `set.NewStringSet()` - String set operations
+
+## Contributing Workflow
+1. Find an issue labeled `help wanted` or `good first issue`
+2. Create a branch: `git checkout -b feature/my-feature`
+3. Make changes and add tests
+4. Run tests: `go test ./...`
+5. Submit PR: `gh pr create --web`
+
+## Resources
+- [QUICKSTART.md](../QUICKSTART.md)
+- [Contributing Guide](.github/Jabs-CONTRIBUTING.md)
+- [Project Layout](docs/project-layout.md)
