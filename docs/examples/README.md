@@ -10,7 +10,7 @@ A complete example showing how to properly handle architecture-specific package 
 
 **Key Features:**
 - Uses Docker BuildKit's automatic platform arguments (`TARGETPLATFORM`, `TARGETARCH`)
-- Demonstrates runtime architecture detection with `uname -m`
+- Demonstrates build-time architecture detection with `uname -m`
 - Shows proper error handling for unsupported architectures
 - Includes real-world examples (AWS CLI, AWS Session Manager Plugin)
 
