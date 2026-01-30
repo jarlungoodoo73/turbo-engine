@@ -14,17 +14,17 @@ A complete example showing how to properly handle architecture-specific package 
 - Shows proper error handling for unsupported architectures
 - Includes real-world examples (AWS CLI, AWS Session Manager Plugin)
 
-**Usage:**
+**Usage (run from repository root):**
 
 ```bash
 # Build for multiple platforms
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -f Dockerfile.multi-arch \
+  -f docs/examples/Dockerfile.multi-arch \
   -t example:latest .
 
 # Build for a specific platform
 docker buildx build --platform linux/arm64 \
-  -f Dockerfile.multi-arch \
+  -f docs/examples/Dockerfile.multi-arch \
   -t example:arm64 \
   --load .
 ```
@@ -43,9 +43,11 @@ These examples were created in response to real-world build failures where Docke
 
 https://github.com/xpipe-io/xpipe-webtop/actions/runs/20578223451/job/59099982309
 
+While this documentation resides in the GitHub CLI repository, it serves as a general reference for Docker multi-architecture builds that may benefit various projects including those using the GitHub CLI in containerized environments.
+
 ## Testing
 
-To test these examples locally:
+To test these examples locally (commands should be run from the repository root):
 
 1. Ensure Docker BuildKit is enabled:
    ```bash
@@ -61,13 +63,13 @@ To test these examples locally:
    ```bash
    # Test AMD64 build
    docker buildx build --platform linux/amd64 \
-     -f Dockerfile.multi-arch \
+     -f docs/examples/Dockerfile.multi-arch \
      -t test:amd64 \
      --load .
    
    # Test ARM64 build
    docker buildx build --platform linux/arm64 \
-     -f Dockerfile.multi-arch \
+     -f docs/examples/Dockerfile.multi-arch \
      -t test:arm64 \
      --load .
    ```

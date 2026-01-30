@@ -1,5 +1,9 @@
 # Docker Multi-Architecture Build Issues
 
+## Overview
+
+This documentation addresses common issues when building Docker images for multiple architectures. While the GitHub CLI repository itself doesn't require Docker multi-architecture builds, this guide serves as a reference for developers who may containerize GitHub CLI or face similar architecture-specific issues in their own projects.
+
 ## Problem Overview
 
 When building Docker images for multiple architectures (e.g., `linux/amd64` and `linux/arm64`), architecture-specific binary downloads must be handled correctly. A common mistake is hardcoding the architecture in download URLs, which causes builds to fail when targeting different platforms.
@@ -60,10 +64,12 @@ RUN echo "**** aws ssm ****" && \
 
 ## Alternative Approach Using TARGETPLATFORM
 
-Docker BuildKit provides build arguments that can be used to detect the target platform:
+Docker BuildKit provides build arguments that can be used to detect the target platform. These must be declared with ARG statements:
 
 ```dockerfile
 ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 RUN echo "**** aws ssm ****" && \
     case "$TARGETPLATFORM" in \

@@ -4,7 +4,8 @@
 
 FROM ubuntu:22.04
 
-# BuildKit automatically provides these ARGs when building with --platform
+# Docker BuildKit makes these ARGs available in the global scope when building with --platform
+# They must be declared with ARG statements to be accessible in the build stage
 ARG TARGETPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -44,7 +45,7 @@ RUN echo "**** Installing AWS CLI ****" && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Example 2: Using uname for runtime architecture detection
+# Example 2: Using uname for build-time architecture detection
 RUN echo "**** Installing AWS Session Manager Plugin ****" && \
     ARCH=$(uname -m) && \
     echo "Detected architecture: $ARCH" && \
@@ -64,16 +65,17 @@ RUN echo "**** Installing AWS Session Manager Plugin ****" && \
     rm -f "/tmp/session-manager-plugin.deb"
 
 # Example 3: Using TARGETARCH (simpler, recommended when available)
+# This shows the structure - in practice, install actual packages as in Examples 1 and 2
 RUN echo "**** Example using TARGETARCH ****" && \
     case "$TARGETARCH" in \
         amd64) \
-            echo "Would install x86_64/amd64 specific package" \
+            echo "Building for x86_64/amd64 - use URLs with 'x86_64' or 'amd64'" \
             ;; \
         arm64) \
-            echo "Would install aarch64/arm64 specific package" \
+            echo "Building for aarch64/arm64 - use URLs with 'aarch64' or 'arm64'" \
             ;; \
         arm) \
-            echo "Would install armv7 specific package" \
+            echo "Building for armv7 - use URLs with 'armv7' or 'armhf'" \
             ;; \
         *) \
             echo "Unsupported architecture: $TARGETARCH" && exit 1 \
@@ -86,13 +88,16 @@ RUN aws --version && \
 
 CMD ["/bin/bash"]
 
-# Build instructions:
+# Build instructions (run from repository root or directory containing this Dockerfile):
 # 
-# For multi-platform build:
+# If this file is named 'Dockerfile' in the current directory:
 #   docker buildx build --platform linux/amd64,linux/arm64 -t myapp:latest .
 #
+# If using this file as 'Dockerfile.multi-arch' from docs/examples/:
+#   docker buildx build --platform linux/amd64,linux/arm64 -f docs/examples/Dockerfile.multi-arch -t myapp:latest .
+#
 # For single platform build (amd64):
-#   docker buildx build --platform linux/amd64 -t myapp:amd64 --load .
+#   docker buildx build --platform linux/amd64 -f docs/examples/Dockerfile.multi-arch -t myapp:amd64 --load .
 #
 # For single platform build (arm64):
-#   docker buildx build --platform linux/arm64 -t myapp:arm64 --load .
+#   docker buildx build --platform linux/arm64 -f docs/examples/Dockerfile.multi-arch -t myapp:arm64 --load .
