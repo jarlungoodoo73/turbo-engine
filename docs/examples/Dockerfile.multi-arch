@@ -1,0 +1,103 @@
+# Multi-Architecture Dockerfile Example
+# This example demonstrates how to correctly handle architecture-specific
+# package downloads in Docker builds targeting multiple platforms.
+
+FROM ubuntu:22.04
+
+# Docker BuildKit makes these ARGs available in the global scope when building with --platform
+# They must be declared with ARG statements to be accessible in the build stage
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+# Display build information
+RUN echo "Building for platform: $TARGETPLATFORM" && \
+    echo "OS: $TARGETOS" && \
+    echo "Architecture: $TARGETARCH"
+
+# Update and install basic dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        ca-certificates \
+        sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Example 1: Using TARGETPLATFORM to download architecture-specific AWS CLI
+RUN echo "**** Installing AWS CLI ****" && \
+    case "$TARGETPLATFORM" in \
+        linux/amd64) \
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+            ;; \
+        linux/arm64) \
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" \
+            ;; \
+        *) \
+            echo "Unsupported platform for AWS CLI: $TARGETPLATFORM" && exit 1 \
+            ;; \
+    esac && \
+    apt-get update && \
+    apt-get install -y unzip && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf aws awscliv2.zip && \
+    apt-get remove -y unzip && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Example 2: Using uname for build-time architecture detection
+RUN echo "**** Installing AWS Session Manager Plugin ****" && \
+    ARCH=$(uname -m) && \
+    echo "Detected architecture: $ARCH" && \
+    case "$ARCH" in \
+        x86_64) \
+            SSM_URL="https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" \
+            ;; \
+        aarch64) \
+            SSM_URL="https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" \
+            ;; \
+        *) \
+            echo "Unsupported architecture for Session Manager: $ARCH" && exit 1 \
+            ;; \
+    esac && \
+    curl "$SSM_URL" -o "/tmp/session-manager-plugin.deb" && \
+    dpkg -i "/tmp/session-manager-plugin.deb" && \
+    rm -f "/tmp/session-manager-plugin.deb"
+
+# Example 3: Using TARGETARCH (simpler, recommended when available)
+# This shows the structure - in practice, install actual packages as in Examples 1 and 2
+RUN echo "**** Example using TARGETARCH ****" && \
+    case "$TARGETARCH" in \
+        amd64) \
+            echo "Building for x86_64/amd64 - use URLs with 'x86_64' or 'amd64'" \
+            ;; \
+        arm64) \
+            echo "Building for aarch64/arm64 - use URLs with 'aarch64' or 'arm64'" \
+            ;; \
+        arm) \
+            echo "Building for armv7 - use URLs with 'armv7' or 'armhf'" \
+            ;; \
+        *) \
+            echo "Unsupported architecture: $TARGETARCH" && exit 1 \
+            ;; \
+    esac
+
+# Verify installations
+RUN aws --version && \
+    session-manager-plugin --version
+
+CMD ["/bin/bash"]
+
+# Build instructions (run from repository root or directory containing this Dockerfile):
+# 
+# If this file is named 'Dockerfile' in the current directory:
+#   docker buildx build --platform linux/amd64,linux/arm64 -t myapp:latest .
+#
+# If using this file as 'Dockerfile.multi-arch' from docs/examples/:
+#   docker buildx build --platform linux/amd64,linux/arm64 -f docs/examples/Dockerfile.multi-arch -t myapp:latest .
+#
+# For single platform build (amd64):
+#   docker buildx build --platform linux/amd64 -f docs/examples/Dockerfile.multi-arch -t myapp:amd64 --load .
+#
+# For single platform build (arm64):
+#   docker buildx build --platform linux/arm64 -f docs/examples/Dockerfile.multi-arch -t myapp:arm64 --load .
