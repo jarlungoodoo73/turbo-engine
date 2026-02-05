@@ -157,7 +157,7 @@ func (i *invoker) Close() error {
 
 	// Return any errors that occurred during cleanup
 	if err := errors.Join(listenerErr, connErr); err != nil {
-		return fmt.Errorf("failed to close resources: %w", err)
+		return fmt.Errorf("failed to close listener and/or gRPC connection: %w", err)
 	}
 	return nil
 }
