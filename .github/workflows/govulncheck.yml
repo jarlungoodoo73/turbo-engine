@@ -26,6 +26,7 @@ jobs:
       # Fix duplicate tags in SARIF file (workaround for https://github.com/golang/go/issues/75890)
       - name: Deduplicate SARIF tags
         run: |
+          set -e
           jq '(.runs[].tool.driver.rules[]?.properties.tags) |= (unique)' gh.sarif > gh-cleaned.sarif
           mv gh-cleaned.sarif gh.sarif
 
