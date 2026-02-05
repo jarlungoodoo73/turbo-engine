@@ -5,6 +5,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -151,12 +152,11 @@ func (i *invoker) Close() error {
 	i.cancelPF()
 
 	// Closing the local listener effectively closes the gRPC connection
-	if err := i.listener.Close(); err != nil {
-		i.conn.Close() // If we fail to close the listener, explicitly close the gRPC connection and ignore any error
-		return fmt.Errorf("failed to close local tcp port listener: %w", err)
-	}
+	listenerErr := i.listener.Close()
+	connErr := i.conn.Close()
 
-	return nil
+	// Return any errors that occurred during cleanup
+	return errors.Join(listenerErr, connErr)
 }
 
 // Appends the authentication token to the gRPC context
