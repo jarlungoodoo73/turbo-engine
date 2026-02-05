@@ -156,7 +156,10 @@ func (i *invoker) Close() error {
 	connErr := i.conn.Close()
 
 	// Return any errors that occurred during cleanup
-	return errors.Join(listenerErr, connErr)
+	if err := errors.Join(listenerErr, connErr); err != nil {
+		return fmt.Errorf("failed to close resources: %w", err)
+	}
+	return nil
 }
 
 // Appends the authentication token to the gRPC context
