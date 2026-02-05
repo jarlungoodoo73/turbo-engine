@@ -23,6 +23,12 @@ jobs:
         run: |
           go run golang.org/x/vuln/cmd/govulncheck@d1f380186385b4f64e00313f31743df8e4b89a77 -format sarif ./... > gh.sarif
 
+      # Fix duplicate tags in SARIF file (workaround for https://github.com/golang/go/issues/75890)
+      - name: Deduplicate SARIF tags
+        run: |
+          jq '(.runs[].tool.driver.rules[]?.properties.tags) |= (unique)' gh.sarif > gh-cleaned.sarif
+          mv gh-cleaned.sarif gh.sarif
+
       - name: Upload SARIF report
         uses: github/codeql-action/upload-sarif@9b02dc2f60288b463e7a66e39c78829b62780db7 # 2.22.1
         with:
